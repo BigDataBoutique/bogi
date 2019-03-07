@@ -1,0 +1,32 @@
+requests_file: request_separator* request request_separator* request_with_separator* request_separator*
+request_with_separator: request_separator+ request
+request_separator: NEWLINE* "###" line_tail NEWLINE*
+line_tail: LINE_TAIL_STR* NEWLINE
+request: request_line headers NEWLINE NEWLINE* [NEWLINE REQUEST_TAIL]
+
+request_line: [method REQUIRED_WHITESPACE] request_target /// [REQUIRED_WHITESPACE http_version]
+method: METHOD
+http_version: "HTTP/" DIGIT+ "." DIGIT+
+request_target: "*"
+              | origin_form
+              | absolute_form
+origin_form: absolute_path ["?" query] ["#" fragment]
+absolute_path: (path_separator SEGMENT path_separator*)+ | "/"
+absolute_form: [SCHEMA] hier_part ["?" query] ["#" fragment]
+hier_part: AUTHORITY [absolute_path]
+path_separator: "/" | newline_with_indent
+query: QUERY_STR [newline_with_indent query]
+fragment: FRAGMENT_STR* [newline_with_indent fragment]
+
+headers: (NEWLINE header_field)*
+
+REQUEST_TAIL: /((?!###)[\s\S])+/ // any string without ###
+METHOD: "GET"   
+      | "HEAD"  
+      | "POST"  
+      | "PUT"   
+      | "DELETE"
+      | "CONNECT"
+      | "PATCH" 
+      | "OPTIONS"
+      | "TRACE"

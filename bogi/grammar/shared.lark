@@ -1,0 +1,24 @@
+header_field: field_name ":" optional_whitespace field_value optional_whitespace
+field_name: FIELD_NAME_STR
+field_value: LINE_TAIL_STR [newline_with_indent field_value]
+
+optional_whitespace: WHITESPACE*
+newline_with_indent: NEWLINE REQUIRED_WHITESPACE
+
+AUTHORITY: HOST [":" DIGIT+]
+HOST: "[" IPV6_ADDRESS "]" | IPV4_OR_REG_NAME
+SCHEMA: ("http" | "https") "://"
+DIGIT: /\d/
+ALPHA: /[A-Za-z]/
+IDENTIFIER_CHARACTER: ALPHA | DIGIT | "-" | "_"
+LINE_TAIL_STR: /[^\n\r(\r\n)]+/
+FIELD_NAME_STR: /[^\s:]+/ // any non-whitespace except ‘:’
+QUERY_STR: /[^\n#]+/ // any input-character except ‘#’
+WHITESPACE: /[ \t\f]/
+REQUIRED_WHITESPACE: WHITESPACE+
+IDENTIFIER: IDENTIFIER_CHARACTER+
+SEGMENT: /[^\n\r(\n\r)\/\?#]+/ // any character except newline, ‘/’, ‘?’ and ‘#’
+IPV6_ADDRESS: /[^\/\]\s]+/ // any non-whitespace except ‘/’, ‘]’
+IPV4_OR_REG_NAME: /[^\/:\?#\s]+/ // any non-whitespace except ‘/’, ‘:’, ‘?’ and ‘#’
+FRAGMENT_STR: /[^\s\?]+/ // any non-whitespace except ‘?’
+NEWLINE: /\r\n/ | /\n/ | /\r/

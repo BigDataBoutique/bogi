@@ -1,0 +1,22 @@
+request_tail: [message_body NEWLINE*] [response_handler NEWLINE*] [response_ref NEWLINE*]
+
+message_body: messages | multipart_form_data
+messages: message_line [NEWLINE messages]
+?message_line: input_file_ref | content_line
+
+content_line: CONTENT_LINE
+input_file_ref: "<" REQUIRED_WHITESPACE file_path
+file_path: FILE_PATH_STR
+multipart_form_data: multipart_field+ BOUNDARY_END
+multipart_field: BOUNDARY_START NEWLINE (header_field NEWLINE)* [NEWLINE messages NEWLINE]
+
+response_handler: ">" REQUIRED_WHITESPACE file_path
+                | ">" REQUIRED_WHITESPACE "{%" HANDLER_SCRIPT "%}"
+
+response_ref: "<>" REQUIRED_WHITESPACE file_path
+
+BOUNDARY_START: "--" BOUNDARY
+BOUNDARY_END: "--" BOUNDARY "--"
+
+FILE_PATH_STR: /((?!(\{%|%\}))[^\n\r])+/
+HANDLER_SCRIPT: /((?!(\{%|%\}))[\s\S])+/

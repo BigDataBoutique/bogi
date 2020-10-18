@@ -61,6 +61,6 @@ Bogi validates that referenced requests return the same response (status code an
 
 #### Javascript Request Handlers
 
-Request Handlers are currently ignored.
+Request Handlers are currently only partially implemented
 
 

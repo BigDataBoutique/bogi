@@ -4,6 +4,9 @@ import requests
 import difflib
 from collections import namedtuple
 
+import js2py
+from bogi.response_handler import HttpClient, HttpResponse
+
 from bogi.parser.tail_transformer import ContentLine, InputFileRef
 
 TestFailure = namedtuple('TestFailure', ['request', 'error'])
@@ -37,12 +40,21 @@ class HttpRunner:
                     # Response handler script should be written in JavaScript ECMAScript 5.1 specification.
                     # See examples in
                     # https://www.jetbrains.com/help/webstorm/http-response-handling-examples.html#script-var-example
-                    # TODO perhaps use http://piter.io/projects/js2py to translate and execute
                     # TODO support a python variant
-                    pass
+                    context = js2py.EvalJs(
+                        {
+                            'client': HttpClient(),
+                            'response': HttpResponse(resp),
+                        }
+                    )
+
+                    try:
+                        context.execute(h.script)
+                    except js2py.internals.simplex.JsException as e:
+                        failures.append(TestFailure(request=req, error=str(e)))
 
                 if h.path:
-                    # TODO
+                    # TODO missing implementations
                     pass
 
             if req.tail.response_ref:

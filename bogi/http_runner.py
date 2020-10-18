@@ -51,7 +51,8 @@ class HttpRunner:
                     try:
                         context.execute(h.script)
                     except js2py.internals.simplex.JsException as e:
-                        failures.append(TestFailure(request=req, error=str(e)))
+                        failures.append(TestFailure(request=req,
+                                                    error=str(e).replace('Error: your Python function failed!  ', '')))
 
                 if h.path:
                     # TODO missing implementations

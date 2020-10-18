@@ -1,4 +1,7 @@
 class HttpClient:
+    def __init__(self):
+        setattr(self, 'assert', self._assert)
+
     """
     Creates test with name 'testName' and body 'func'.
     All tests will be executed right after response handler script.

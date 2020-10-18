@@ -1,6 +1,7 @@
-requests_file: request_separator* request request_separator* request_with_separator* request_separator*
+requests_file: request_separator* request_options* request_separator* request request_separator* request_with_separator* request_separator*
 request_with_separator: request_separator+ request
 request_separator: NEWLINE* "###" line_tail NEWLINE*
+request_options: "//" SEGMENT* NEWLINE
 line_tail: LINE_TAIL_STR* NEWLINE
 request: request_line headers NEWLINE NEWLINE* [NEWLINE REQUEST_TAIL]
 
@@ -21,12 +22,12 @@ fragment: FRAGMENT_STR* [newline_with_indent fragment]
 headers: (NEWLINE header_field)*
 
 REQUEST_TAIL: /((?!###)[\s\S])+/ // any string without ###
-METHOD: "GET"   
-      | "HEAD"  
-      | "POST"  
-      | "PUT"   
+METHOD: "GET"
+      | "HEAD"
+      | "POST"
+      | "PUT"
       | "DELETE"
       | "CONNECT"
-      | "PATCH" 
+      | "PATCH"
       | "OPTIONS"
       | "TRACE"

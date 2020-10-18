@@ -120,6 +120,18 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(reqs[0].method, 'POST')
         self.assertEqual(reqs[0].target, 'http://example.com/api/a/b/c')
 
+    def test_request_options(self):
+        reqs = self.parser.parse(dedent('''
+        // @no-redirect
+        ### Post to API add
+        POST http://example.com/api/a/b/c
+        Content-Type: application/json
+        '''))
+
+        self.assertEqual(len(reqs), 1)
+        self.assertEqual(reqs[0].method, 'POST')
+        self.assertEqual(reqs[0].target, 'http://example.com/api/a/b/c')
+
     def test_simple_with_tail(self):
         reqs = self.parser.parse(dedent('''
         ### Post to API add

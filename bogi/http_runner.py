@@ -5,6 +5,8 @@ import difflib
 from collections import namedtuple
 
 import js2py
+from requests import RequestException
+
 from bogi.response_handler import HttpClient, HttpResponse
 
 from bogi.parser.tail_transformer import ContentLine, InputFileRef
@@ -25,7 +27,12 @@ class HttpRunner:
         failures = []
 
         for req in self._requests:
-            resp = self._execute_request(req)
+            try:
+                resp = self._execute_request(req)
+            except RequestException as e:
+                failures.append(TestFailure(request=req,
+                                            error=f'Error issuing the request, root cause: {str(e)}'))
+                continue
 
             if req.id:
                 resp_by_id[req.id] = resp
@@ -33,7 +40,8 @@ class HttpRunner:
             if req.tail.response_handler:
                 h = req.tail.response_handler
                 if h.expected_status_code and resp.status_code != h.expected_status_code:
-                    failures.append(TestFailure(request=req, error=f'Expected status code {h.expected_status_code}, but got {resp.status_code}'))
+                    failures.append(TestFailure(request=req, error=f'Expected status code {h.expected_status_code},'
+                                                                   f' but got {resp.status_code}'))
                     break
 
                 if h.script:

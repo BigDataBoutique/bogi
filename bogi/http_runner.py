@@ -23,16 +23,27 @@ class HttpRunner:
 
         for req in self._requests:
             resp = self._execute_request(req)
+
             if req.id:
                 resp_by_id[req.id] = resp
 
             if req.tail.response_handler:
-                # Response handler script should be written in JavaScript ECMAScript 5.1 specification.
-                # See examples in
-                # https://www.jetbrains.com/help/webstorm/http-response-handling-examples.html#script-var-example
-                # TODO perhaps use http://piter.io/projects/js2py to translate and execute
-                # TODO support a python variant
-                pass
+                h = req.tail.response_handler
+                if h.expected_status_code and resp.status_code != h.expected_status_code:
+                    failures.append(TestFailure(request=req, error=f'Expected status code {h.expected_status_code}, but got {resp.status_code}'))
+                    break
+
+                if h.script:
+                    # Response handler script should be written in JavaScript ECMAScript 5.1 specification.
+                    # See examples in
+                    # https://www.jetbrains.com/help/webstorm/http-response-handling-examples.html#script-var-example
+                    # TODO perhaps use http://piter.io/projects/js2py to translate and execute
+                    # TODO support a python variant
+                    pass
+
+                if h.path:
+                    # TODO
+                    pass
 
             if req.tail.response_ref:
                 compare_jobs.append(CompareJob(req=req,

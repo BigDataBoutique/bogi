@@ -9,7 +9,7 @@ MessageBody = namedtuple('MessageBody', ['messages'])
 ContentLine = namedtuple('ContentLine', ['content'])
 InputFileRef = namedtuple('InputFileRef', ['path'])
 MultipartField = namedtuple('MultipartField', ['headers', 'messages'])
-ResponseHandler = namedtuple('ResponseHandler', ['script', 'path'])
+ResponseHandler = namedtuple('ResponseHandler', ['script', 'path', 'expected_status_code'])
 ResponseReference = namedtuple('ResponseReference', ['path'])
 
 
@@ -23,9 +23,9 @@ class TailTransformer(BaseTransformer):
         for p in parts:
             if type(p) is MessageBody:
                 message_body = p
-            if type(p) is ResponseHandler:
+            elif type(p) is ResponseHandler:
                 response_handler = p
-            if type(p) is ResponseReference:
+            elif type(p) is ResponseReference:
                 response_reference = p
         return RequestTail(message_body=message_body,
                            response_handler=response_handler,
@@ -69,14 +69,20 @@ class TailTransformer(BaseTransformer):
                 messages += p
         return MultipartField(headers=headers, messages=messages)
 
+    def response_status(self, parts):
+        for p in parts:
+            if type(p) is Tree and p.data == 'status_code' and len(p.children) == 1:
+                p = p.children[0]
+                if type(p) is Token and p.type == 'VALID_STATUS_CODE':
+                    return ResponseHandler(script=None, path=None, expected_status_code=int(p))
+
     def response_handler(self, parts):
-        script_path, script_code = None, None
         for p in parts:
             if type(p) is Token and p.type == 'HANDLER_SCRIPT':
-                return ResponseHandler(script=str(p).strip(), path=None)
+                return ResponseHandler(script=str(p).strip(), path=None, expected_status_code=None)
 
             elif type(p) is Tree and p.data == 'file_path':
-                return ResponseHandler(script=None, path=self._join_parts(p.children))
+                return ResponseHandler(script=None, path=self._join_parts(p.children), expected_status_code=None)
 
     def response_ref(self, parts):
         for p in parts:

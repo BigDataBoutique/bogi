@@ -1,4 +1,4 @@
-request_tail: [message_body NEWLINE*] [response_handler NEWLINE*] [response_ref NEWLINE*]
+request_tail: [message_body NEWLINE*] [response_status NEWLINE*] [response_handler NEWLINE*] [response_ref NEWLINE*]
 
 message_body: messages | multipart_form_data
 messages: message_line [NEWLINE messages]
@@ -7,8 +7,11 @@ messages: message_line [NEWLINE messages]
 content_line: CONTENT_LINE
 input_file_ref: "<" REQUIRED_WHITESPACE file_path
 file_path: FILE_PATH_STR
+status_code: VALID_STATUS_CODE
 multipart_form_data: multipart_field+ BOUNDARY_END
 multipart_field: BOUNDARY_START NEWLINE (header_field NEWLINE)* [NEWLINE messages NEWLINE]
+
+response_status.9: ">STATUS" REQUIRED_WHITESPACE status_code
 
 response_handler: ">" REQUIRED_WHITESPACE file_path
                 | ">" REQUIRED_WHITESPACE "{%" HANDLER_SCRIPT "%}"
@@ -20,3 +23,4 @@ BOUNDARY_END: "--" BOUNDARY "--"
 
 FILE_PATH_STR: /((?!(\{%|%\}))[^\n\r])+/
 HANDLER_SCRIPT: /((?!(\{%|%\}))[\s\S])+/
+VALID_STATUS_CODE: /[1-5]\d{2,2}/

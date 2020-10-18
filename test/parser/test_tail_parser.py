@@ -92,6 +92,13 @@ class TailParserTests(unittest.TestCase):
         tail = TailParser().parse(body)
         self.assertEqual(tail.response_handler, ResponseHandler(script=None, path='./script.js'))
 
+    def test_response_status_code(self):
+        body = dedent('''
+        >STATUS 301''')
+
+        tail = TailParser().parse(body)
+        self.assertEqual(tail.response_handler, ResponseHandler(script=None, path=None, expected_status_code=301))
+
     def test_response_ref(self):
         body = dedent('''
         <> ./previous-response.200.json''')

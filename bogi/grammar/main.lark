@@ -1,9 +1,10 @@
-requests_file: request_separator* request_options* request_separator* request request_separator* request_with_separator* request_separator*
+requests_file: request_separator* request request_separator* request_with_separator* request_separator*
 request_with_separator: request_separator+ request
 request_separator: NEWLINE* "###" line_tail NEWLINE*
-request_options: "//" SEGMENT* NEWLINE
+request_options: "//" WHITESPACE* SEGMENT* NEWLINE
+                | "#" WHITESPACE* SEGMENT* NEWLINE
 line_tail: LINE_TAIL_STR* NEWLINE
-request: request_line headers NEWLINE NEWLINE* [NEWLINE REQUEST_TAIL]
+request: request_options* request_line headers NEWLINE NEWLINE* [NEWLINE REQUEST_TAIL]
 
 request_line: [method REQUIRED_WHITESPACE] request_target /// [REQUIRED_WHITESPACE http_version]
 method: METHOD

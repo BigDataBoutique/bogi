@@ -122,8 +122,8 @@ class ParserTests(unittest.TestCase):
 
     def test_request_options(self):
         reqs = self.parser.parse(dedent('''
-        // @no-redirect
         ### Post to API add
+        // @no-redirect
         POST http://example.com/api/a/b/c
         Content-Type: application/json
         '''))
@@ -132,11 +132,25 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(reqs[0].method, 'POST')
         self.assertEqual(reqs[0].target, 'http://example.com/api/a/b/c')
 
+    def test_multiple_request_options(self):
+        reqs = self.parser.parse(dedent('''
+        ### Post to API add
+        // @no-redirect
+        // @no-cookie-jar
+        POST http://example.com/api/a/b/c
+        Content-Type: application/json
+        '''))
+
+        self.assertEqual(len(reqs), 1)
+        self.assertEqual(reqs[0].method, 'POST')
+        self.assertEqual(reqs[0].target, 'http://example.com/api/a/b/c')
+        self.assertEqual(reqs[0].options, {'@no-redirect', '@no-cookie-jar'})
+
     def test_request_options_with_named_request(self):
         reqs = self.parser.parse(dedent('''
-        // @no-redirect
         ### Post to API add
         ### post-to-api
+        // @no-redirect
         POST http://example.com/api/a/b/c
         Content-Type: application/json
         '''))
@@ -145,6 +159,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(reqs[0].method, 'POST')
         self.assertEqual(reqs[0].id, 'post-to-api')
         self.assertEqual(reqs[0].target, 'http://example.com/api/a/b/c')
+        self.assertEqual(reqs[0].options, {'@no-redirect'})
 
     def test_simple_with_tail(self):
         reqs = self.parser.parse(dedent('''

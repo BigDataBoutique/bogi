@@ -10,10 +10,13 @@ RequestSeparator = namedtuple('RequestSeparator', ['comment'])
 
 
 class Request:
-    def __init__(self, request_line, headers=None, separators=None, tail=None):
+    def __init__(self, request_line, headers=None, separators=None, options=None, tail=None):
+        if options is None:
+            options = set()
         self.request_line = request_line
         self.separators = separators
         self.headers = headers or []
+        self.options = options
         self.tail = tail
 
     @property
@@ -82,6 +85,7 @@ class MainTransformer(BaseTransformer):
     def request(self, parts):
         parts = self._filter_none(parts)
         request_line, headers, tail = None, None, None
+        options = set()
 
         for p in parts:
             if type(p) is RequestLine:
@@ -90,8 +94,12 @@ class MainTransformer(BaseTransformer):
                 headers = p.headers
             elif type(p) is Token and p.type == 'REQUEST_TAIL':
                 tail = str(p)
+            elif type(p) is Tree and p.data == 'request_options':
+                for c in p.children:
+                    if type(c) is Token and c.type == 'SEGMENT':
+                        options.add(str(c))
 
-        return Request(request_line=request_line, headers=headers, tail=tail)
+        return Request(request_line=request_line, headers=headers, options=options, tail=tail)
 
     def request_separator(self, parts):
         line_tail = self._filter_type(parts, Tree)[0]

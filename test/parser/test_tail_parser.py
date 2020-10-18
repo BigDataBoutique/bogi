@@ -4,8 +4,8 @@ from test.utils import dedent
 from bogi.parser.tail import TailParser
 from bogi.parser.tail_transformer import MessageBody, ContentLine, InputFileRef, MultipartField, Header, ResponseHandler, ResponseReference
 
-class TailParserTests(unittest.TestCase):
 
+class TailParserTests(unittest.TestCase):
     def test_content_lines(self):
         body = dedent('''
         {

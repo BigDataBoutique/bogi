@@ -60,7 +60,8 @@ class HttpRunner:
             for header in req.headers
         }
         data = self._request_payload(req)
-        return requests.request(req.method, req.target, headers=headers, data=data)
+        # TODO support no-redirect flags on this https://gitlab.com/BigDataBoutique/bogi/-/issues/1
+        return requests.request(req.method, req.target, headers=headers, data=data, allow_redirects=False)
 
     def _diff_responses(self, resp1, resp2):
         if resp1.status_code != resp2.status_code:

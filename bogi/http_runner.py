@@ -1,3 +1,5 @@
+import json
+
 import requests
 import difflib
 from collections import namedtuple
@@ -74,9 +76,9 @@ class HttpRunner:
             json1, json2 = resp1.json(), resp2.json()
             if json1 != json2:
                 return "Response body mismatch."
-        except:
+        except (json.decoder.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
             if resp1.text != resp2.text:
-                return "Response body mismatch."
+                return "Response body mismatch. Encountered error while comparing: %s" % e
 
         return None
 

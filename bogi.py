@@ -9,6 +9,19 @@ from bogi.parser.main import Parser as BogiParser
 from bogi.http_runner import HttpRunner
 from bogi.logger import logger
 
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('http_path', type=str, help='.http files directory or single .http file path')
@@ -42,28 +55,28 @@ if __name__ == '__main__':
                 logger.exception(e)
                 continue
 
-            logger.debug('* Processing {}, {} requests.'.format(fname, len(requests)))
+            logger.info(f'{bcolors.HEADER}Processing {fname}, {len(requests)} requests.{bcolors.ENDC}')
 
             try:
                 failures = HttpRunner(requests, ignore_headers=True).run()
                 if not failures:
-                    logger.debug('Success.')
+                    logger.info(f'\t{bcolors.OKGREEN}\u2713 Success{bcolors.ENDC}')
                     success_count += 1
                     continue
 
                 for fail in failures:
                     if fail.request.id:
-                        logger.error('Error in "{}". {}'.format(fail.request.id, fail.error))
+                        logger.error(f'\t{bcolors.FAIL}Error in "{fail.request.id}". {fail.error}{bcolors.ENDC}')
                     else:
-                        logger.error('Error in request {}\n{}'.format(str(fail.request), fail.error))
+                        logger.error(f'\t{bcolors.FAIL}Check {fail.request.method} {fail.request.target} failed\n\t{fail.error}{bcolors.ENDC}')
 
             except Exception as e:
-                logger.error("Exception while running {}\n".format(fname))
+                logger.fatal("Exception while running {}\n".format(fname))
                 logger.exception(e)
 
     if success_count == len(http_paths):
-        logger.debug("All requests passed.")
+        logger.info(f'{bcolors.BOLD}{bcolors.OKGREEN}{success_count} requests passed.{bcolors.ENDC}')
         sys.exit(0)
     else:
-        logger.error("Fail. {}/{} tests passed.".format(success_count, len(http_paths)))
+        logger.fatal(f'{bcolors.BOLD}{bcolors.FAIL}{success_count} requests passed checks, {len(http_paths) - success_count} failed.{bcolors.ENDC}')
         sys.exit(1)

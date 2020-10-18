@@ -14,11 +14,11 @@ GET https://google.com
 <> with-trailing-slash
 
 ###
-GET https://raw.githubusercontent.com/dtube/minidtube/master/robots.json
+GET https://github.com/BigDataBoutique.json
 
 > {%
     client.test("Request executed successfully", function() {
-        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.status === 410, "Response status is not 410");
     });
 
     client.test("Headers option exists", function() {

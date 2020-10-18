@@ -35,7 +35,10 @@ class HttpResponse:
         self.status = response.status_code
         self.body = ResponseBody(response)
         self.headers = response.headers
-        self.contentType = {'mimeType': response.headers['Content-Type'], 'charset': response.encoding }
+        self.contentType = {
+            'mimeType': (response.headers.get('Content-Type') or '').split('; charset')[0],
+            'charset': response.encoding
+        }
 
 
 class ResponseBody:

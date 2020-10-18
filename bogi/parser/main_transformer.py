@@ -8,6 +8,7 @@ from bogi.parser.util import BaseTransformer, HeaderList
 RequestLine = namedtuple('RequestLine', ['method', 'target', 'http_version'])
 RequestSeparator = namedtuple('RequestSeparator', ['comment'])
 
+
 class Request:
     def __init__(self, request_line, headers=None, separators=None, tail=None):
         self.request_line = request_line
@@ -24,7 +25,7 @@ class Request:
     @property
     def method(self):
         return self.request_line.method or 'GET'
-    
+
     @property
     def http_version(self):
         return self.request_line.method
@@ -63,8 +64,8 @@ class Request:
         req_id = '(' + self.id + ')' if self.id else ''
         return 'Request{}\n'.format(req_id) + '\n'.join(parts)
 
-class MainTransformer(BaseTransformer):
 
+class MainTransformer(BaseTransformer):
     def requests_file(self, parts):
         parts = self._flatten(parts)
         parts = self._filter_none(parts)
@@ -75,7 +76,7 @@ class MainTransformer(BaseTransformer):
                 separators.append(p)
             if type(p) is Request:
                 p.separators = separators
-                separators = []            
+                separators = []
         return self._filter_type(parts, Request)
 
     def request(self, parts):

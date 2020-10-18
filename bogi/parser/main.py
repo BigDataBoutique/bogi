@@ -15,7 +15,7 @@ class Parser:
         parser = Lark(self._grammar, start='requests_file', keep_all_tokens=True)
         tree = parser.parse(code + '\n')
         requests = MainTransformer().transform(tree)
-        
+
         for r in requests:
             if r.tail is None:
                 r.tail = RequestTail(message_body=None, response_handler=None, response_ref=None)

@@ -58,7 +58,7 @@ if __name__ == '__main__':
                         logger.error('Error in request {}\n{}'.format(str(fail.request), fail.error))
 
             except Exception as e:
-                logger.error("Exception while running {}".format(fname))
+                logger.error("Exception while running {}\n".format(fname))
                 logger.exception(e)
 
     if success_count == len(http_paths):

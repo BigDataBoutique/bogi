@@ -1,33 +1,19 @@
 image: docker:stable
 
 stages:
-  - build
   - test
   - release
 
 variables:
   STAGING_REGISTRY: "registry.gitlab.com"
-  CONTAINER_TEST_IMAGE: ${STAGING_REGISTRY}/bigdataboutique/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}
-
-build:
-  stage: build
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $STAGING_REGISTRY
-  services:
-    - docker:dind
-  script:
-    - docker build -t $CONTAINER_TEST_IMAGE .
-    - docker push $CONTAINER_TEST_IMAGE
 
 test:
+  image: python:3.9
   stage: test
   before_script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $STAGING_REGISTRY
-  services:
-    - docker:dind
+    - pip install -r requirements.txt
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker run $CONTAINER_TEST_IMAGE /usr/src/app/run-tests.sh
+    - python -m unittest discover test
 
 release:
   stage: release
@@ -37,8 +23,7 @@ release:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $STAGING_REGISTRY
   script:
     - IMAGE_NAME=${STAGING_REGISTRY}/bigdataboutique/${CI_PROJECT_NAME}:`date '+%Y-%m-%d-%H%M'`-${CI_COMMIT_SHA:0:9}
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $IMAGE_NAME
+    - docker build -t $IMAGE_NAME .
     - docker push $IMAGE_NAME
   only:
     - master

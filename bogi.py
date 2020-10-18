@@ -5,6 +5,8 @@ import sys
 import logging
 import argparse
 
+import lark
+
 from bogi.parser.main import Parser as BogiParser
 from bogi.http_runner import HttpRunner
 from bogi.logger import logger
@@ -50,9 +52,8 @@ if __name__ == '__main__':
 
             try:
                 requests = BogiParser().parse(file.read())
-            except Exception as e:
-                logger.error('Parsing error in {}'.format(fname))
-                logger.exception(e)
+            except lark.LarkError as e:
+                logger.error(f'{bcolors.WARNING}Parsing error in {fname}{bcolors.ENDC}\n{str(e)}')
                 continue
 
             logger.info(f'{bcolors.HEADER}Processing {fname}, {len(requests)} requests.{bcolors.ENDC}')
@@ -66,7 +67,8 @@ if __name__ == '__main__':
 
                 for fail in failures:
                     if fail.request.id:
-                        logger.error(f'\t{bcolors.FAIL}Error in "{fail.request.id}". {fail.error}{bcolors.ENDC}')
+                        logger.error(f'\t{bcolors.FAIL}Check {fail.request.method} {fail.request.target} failed\n\t'
+                                     f'Error in "{fail.request.id}". {fail.error}{bcolors.ENDC}')
                     else:
                         logger.error(f'\t{bcolors.FAIL}Check {fail.request.method} {fail.request.target} failed\n\t{fail.error}{bcolors.ENDC}')
 

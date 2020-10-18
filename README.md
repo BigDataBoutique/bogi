@@ -64,4 +64,10 @@ Bogi validates that referenced requests return the same response (status code an
 
 Request Handlers are currently only partially implemented
 
+#### Environment variables substitution not supported
 
+The `{{foo}}` syntax for substitution with environment variables is not yet supported
+
+#### Multi-part form-data POSTs
+
+That isn't working either

@@ -25,11 +25,12 @@ Bogi accepts a required argument which should either be a path to directory
 with `.http` files, or a single `.http` file.
 
 ```bash
-./bogi.py requests/samples
+./bogi.py ./examples
 ```
 
-Will run all `.http` files in `requests/samples` directory.
-Process will exit with `0` exit code if all tests pass.
+Will run all `.http` files in `examples` directory. These are mostly example files taken from or based on JetBrain's Request in Editor docs and examples.
+
+The process will exit with `0` exit code if all tests pass.
 
 ## Running the dockerized version
 

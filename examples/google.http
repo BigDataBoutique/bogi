@@ -1,0 +1,14 @@
+//@no-redirect
+//@no-cookie-jar
+GET http://google.com
+
+>STATUS 301
+
+### Comment next to the request will be treated as a request ID
+### with-trailing-slash
+GET https://google.com/
+
+### without-trailing-slash
+GET https://google.com
+
+<> with-trailing-slash

@@ -25,7 +25,11 @@ class HttpRunner:
                 resp_by_id[req.id] = resp
 
             if req.tail.response_handler:
-                # TODO
+                # Response handler script should be written in JavaScript ECMAScript 5.1 specification.
+                # See examples in
+                # https://www.jetbrains.com/help/webstorm/http-response-handling-examples.html#script-var-example
+                # TODO perhaps use http://piter.io/projects/js2py to translate and execute
+                # TODO support a python variant
                 pass
 
             if req.tail.response_ref:

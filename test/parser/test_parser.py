@@ -90,7 +90,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(reqs[1].target, 'http://example.com')
         self.assertEqual(reqs[2].method, 'GET')
         self.assertEqual(reqs[2].separators, [RequestSeparator(None), RequestSeparator('Third')])
-        self.assertEqual(reqs[2].target, '/api/test')        
+        self.assertEqual(reqs[2].target, '/api/test')
         self.assertEqual(reqs[2].headers[0], Header('Host', 'example.com'))
 
     def test_origin_form_and_headers(self):
@@ -158,7 +158,8 @@ class ParserTests(unittest.TestCase):
                     resolve();
                 }
                 ''').strip(),
-                path=None
+                path=None,
+                expected_status_code=None
             ),
             response_ref=ResponseReference(path='./path/response.ref.json')
         ))
@@ -219,7 +220,8 @@ class ParserTests(unittest.TestCase):
                     resolve();
                 }
                 ''').strip(),
-                path=None
+                path=None,
+                expected_status_code=None
             ),
             response_ref=ResponseReference(path='./path/response.ref.json')
         ))
@@ -242,7 +244,8 @@ class ParserTests(unittest.TestCase):
                     resolve();
                 }
                 ''').strip(),
-                path=None
+                path=None,
+                expected_status_code=None
             ),
             response_ref=ResponseReference(path='./path/response.ref.json')
         ))

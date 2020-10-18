@@ -83,14 +83,14 @@ class TailParserTests(unittest.TestCase):
         > {% ''' + script + ''' %}''')
 
         tail = TailParser().parse(body)
-        self.assertEqual(tail.response_handler, ResponseHandler(script=script.strip(), path=None))
+        self.assertEqual(tail.response_handler, ResponseHandler(script=script.strip(), path=None, expected_status_code=None))
 
     def test_response_handler_path(self):
         body = dedent('''
         > ./script.js''')
 
         tail = TailParser().parse(body)
-        self.assertEqual(tail.response_handler, ResponseHandler(script=None, path='./script.js'))
+        self.assertEqual(tail.response_handler, ResponseHandler(script=None, path='./script.js', expected_status_code=None))
 
     def test_response_status_code(self):
         body = dedent('''

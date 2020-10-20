@@ -43,6 +43,8 @@ release:
 
 dockerhub:
   stage: release
+  services:
+    - docker:dind
   variables:
     GIT_STRATEGY: none
   before_script:

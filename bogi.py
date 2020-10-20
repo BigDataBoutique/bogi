@@ -7,22 +7,11 @@ import argparse
 
 import lark
 
+from bogi import bcolors
+from bogi.callbacks import LoggerCallback
 from bogi.parser.main import Parser as BogiParser
 from bogi.http_runner import HttpRunner
 from bogi.logger import logger
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -59,18 +48,11 @@ if __name__ == '__main__':
             logger.info(f'{bcolors.HEADER}Processing {fname}, {len(requests)} requests.{bcolors.ENDC}')
 
             try:
-                failures = HttpRunner(requests, ignore_headers=True).run()
-                if not failures:
+                callback = HttpRunner(requests, callback=LoggerCallback(logger), ignore_headers=True).run()
+                if len(callback.failures) == 0:
                     logger.info(f'\t{bcolors.OKGREEN}\u2713 Success{bcolors.ENDC}')
                     success_count += 1
                     continue
-
-                for fail in failures:
-                    if fail.request.id:
-                        logger.error(f'\t{bcolors.FAIL}Check {fail.request.method} {fail.request.target} failed\n\t'
-                                     f'Error in "{fail.request.id}". {fail.error}{bcolors.ENDC}')
-                    else:
-                        logger.error(f'\t{bcolors.FAIL}Check {fail.request.method} {fail.request.target} failed\n\t{fail.error}{bcolors.ENDC}')
 
             except Exception as e:
                 logger.fatal("Exception while running {}\n".format(fname))
@@ -80,5 +62,6 @@ if __name__ == '__main__':
         logger.info(f'{bcolors.BOLD}{bcolors.OKGREEN}{success_count} requests passed.{bcolors.ENDC}')
         sys.exit(0)
     else:
-        logger.fatal(f'{bcolors.BOLD}{bcolors.FAIL}{success_count} requests passed checks, {len(http_paths) - success_count} failed.{bcolors.ENDC}')
+        logger.fatal(f'{bcolors.BOLD}{bcolors.FAIL}{success_count} requests passed checks, '
+                     f'{len(http_paths) - success_count} failed.{bcolors.ENDC}')
         sys.exit(1)

@@ -1,4 +1,5 @@
 import json
+import time
 
 import requests
 import difflib
@@ -7,30 +8,38 @@ from collections import namedtuple
 import js2py
 from requests import RequestException
 
+from bogi.callbacks import CallbackBase
 from bogi.response_handler import HttpClient, HttpResponse
 
 from bogi.parser.tail_transformer import ContentLine, InputFileRef
 
-TestFailure = namedtuple('TestFailure', ['request', 'error'])
+TestFailure = namedtuple('TestFailure', ['request', 'error', 'response_time'])
+TestSuccess = namedtuple('TestSuccess', ['request', 'latency', 'response_time'])
 CompareJob = namedtuple('CompareJob', ['req', 'resp', 'request_id'])
 
 
 class HttpRunner:
 
-    def __init__(self, requests, ignore_headers):
+    def __init__(self, requests, ignore_headers, callback=None):
+        if callback is None:
+            callback = CallbackBase()
         self._requests = requests
         self._ignore_headers = ignore_headers
+        self.callback = callback
 
     def run(self):
         resp_by_id = {}
         compare_jobs = []
-        failures = []
 
         for req in self._requests:
+            response_time = -1  # time between sending the request and finishing parsing the entire response
+            latency = -1    # time between sending the request and finishing parsing the response headers
             try:
-                resp = self._execute_request(req)
+                resp, response_time = self._execute_request(req)
+                latency = resp.elapsed.total_seconds() * 100
             except RequestException as e:
-                failures.append(TestFailure(request=req,
+                self.callback.failure(TestFailure(request=req,
+                                            response_time=-1,
                                             error=f'Error issuing the request, root cause: {str(e)}'))
                 continue
 
@@ -40,8 +49,10 @@ class HttpRunner:
             if req.tail.response_handler:
                 h = req.tail.response_handler
                 if h.expected_status_code and resp.status_code != h.expected_status_code:
-                    failures.append(TestFailure(request=req, error=f'Expected status code {h.expected_status_code},'
-                                                                   f' but got {resp.status_code}'))
+                    self.callback.failure(TestFailure(request=req,
+                                                      response_time=response_time,
+                                                      error=f'Expected status code {h.expected_status_code},'
+                                                            f' but got {resp.status_code}'))
                     break
 
                 if h.script:
@@ -59,7 +70,8 @@ class HttpRunner:
                     try:
                         context.execute(h.script)
                     except js2py.internals.simplex.JsException as e:
-                        failures.append(TestFailure(request=req,
+                        self.callback.failure(TestFailure(request=req,
+                                                          response_time=response_time,
                                                     error=str(e).replace('Error: your Python function failed!  ', '')))
 
                 if h.path:
@@ -71,20 +83,23 @@ class HttpRunner:
                                                resp=resp,
                                                request_id=req.tail.response_ref.path))
 
+            self.callback.success(TestSuccess(request=req, latency=latency, response_time=response_time))
+
         for job in compare_jobs:
             cmp_resp = resp_by_id.get(job.request_id)
             if cmp_resp is None:
                 req_ids = list(resp_by_id.keys())
                 error = 'Request with id "{}" not found. Defined requests: {}'.format(job.request_id, req_ids)
-                failures.append(TestFailure(request=job.req,
-                                            error=error))
+                self.callback.failure(TestFailure(request=job.req,
+                                                  response_time=job.resp.elapsed.total_seconds() * 100,
+                                                  error=error))
                 continue
 
             diff = self._diff_responses(job.resp, cmp_resp)
             if diff:
-                failures.append(TestFailure(request=job.req, error=diff))
+                self.callback.failure(TestFailure(request=job.req, response_time=job.resp.elapsed / 100, error=diff))
 
-        return failures
+        return self.callback
 
     def _execute_request(self, req):
         headers = {
@@ -97,7 +112,9 @@ class HttpRunner:
         if '@no-redirect' in req.options:
             allow_redirects = False
 
-        return requests.request(req.method, req.target, headers=headers, data=data, allow_redirects=allow_redirects)
+        start = time.time()
+        resp = requests.request(req.method, req.target, headers=headers, data=data, allow_redirects=allow_redirects)
+        return resp, (time.time() - start) * 100
 
     def _diff_responses(self, resp1, resp2):
         if resp1.status_code != resp2.status_code:

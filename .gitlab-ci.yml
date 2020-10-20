@@ -42,6 +42,7 @@ release:
       - requirements.txt
     refs:
       - master
+      - /^v.*$/
 
 dockerhub:
   stage: release

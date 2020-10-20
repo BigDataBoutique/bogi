@@ -20,10 +20,10 @@ CompareJob = namedtuple('CompareJob', ['req', 'resp', 'request_id'])
 
 class HttpRunner:
 
-    def __init__(self, requests, ignore_headers, callback=None):
+    def __init__(self, _requests, ignore_headers, callback=None):
         if callback is None:
             callback = CallbackBase()
-        self._requests = requests
+        self._requests = _requests
         self._ignore_headers = ignore_headers
         self.callback = callback
 
@@ -97,7 +97,8 @@ class HttpRunner:
 
             diff = self._diff_responses(job.resp, cmp_resp)
             if diff:
-                self.callback.failure(TestFailure(request=job.req, response_time=job.resp.elapsed / 100, error=diff))
+                self.callback.failure(TestFailure(request=job.req, response_time=job.resp.elapsed.total_seconds() * 100,
+                                                  error=diff))
 
         return self.callback
 

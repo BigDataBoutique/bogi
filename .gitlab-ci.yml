@@ -20,6 +20,8 @@ test:
       - bogi/**/*
       - test/**/*
       - requirements.txt
+  except:
+    - /^v.*$/
 
 release:
   stage: release

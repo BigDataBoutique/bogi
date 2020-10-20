@@ -44,7 +44,8 @@ release:
 dockerhub:
   stage: release
   services:
-    - docker:dind
+    - name: docker:dind
+      command: ["--experimental"]
   variables:
     GIT_STRATEGY: none
   before_script:

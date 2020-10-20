@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import argparse
+from time import sleep
 from urllib.parse import urlparse
 
 import lark
@@ -15,36 +16,12 @@ from bogi.parser.main import Parser as BogiParser
 from bogi.http_runner import HttpRunner
 from bogi.logger import logger
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('http_path', type=str, help='.http files directory or single .http file path')
-    parser.add_argument('--es_hosts', type=str, help='Elasticsearch hosts to index results into', required=False)
-    parser.add_argument('--quiet', '-q', action='store_true', help='Only log errors')
-    args = parser.parse_args()
+es = None
+report_to_es = False
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
 
-    if not os.path.exists(args.http_path):
-        logger.error("{} does not exist".format(args.http_path))
-        sys.exit(2)
-
-    es = None
-    report_to_es = False
+def run():
     es_actions = []
-    if args.es_hosts:
-        es = Elasticsearch(hosts=args.es_hosts)
-        if not es.ping():
-            raise Exception(f'Elasticsearch at {args.es_hosts} is unavailable, quitting')
-        report_to_es = True
-
-    if os.path.isdir(args.http_path):
-        http_paths = [os.path.join(args.http_path, fname)
-                      for fname in os.listdir(args.http_path)]
-    else:
-        http_paths = [args.http_path]
-    http_paths = [path for path in http_paths if path.endswith('.http')]
-
     success_count = 0
 
     for path in http_paths:
@@ -104,12 +81,59 @@ if __name__ == '__main__':
 
     if report_to_es and len(es_actions):
         helpers.bulk(es, es_actions, stats_only=True)
-        es_actions = []
 
-    if success_count == len(http_paths):
-        logger.info(f'{bcolors.BOLD}{bcolors.OKGREEN}{success_count} requests passed.{bcolors.ENDC}')
-        sys.exit(0)
-    else:
+    if len(http_paths) > success_count:
         logger.fatal(f'{bcolors.BOLD}{bcolors.FAIL}{success_count} requests passed checks, '
                      f'{len(http_paths) - success_count} failed.{bcolors.ENDC}')
-        sys.exit(1)
+    else:
+        logger.info(f'{bcolors.BOLD}{bcolors.OKGREEN}{success_count}/{http_paths} requests passed.{bcolors.ENDC}')
+
+    return success_count, len(http_paths) - success_count
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('http_path', type=str, help='.http files directory or single .http file path')
+    parser.add_argument('--es_hosts', type=str, help='Elasticsearch hosts to index results into', required=False)
+    parser.add_argument('--quiet', '-q', action='store_true', help='Only log errors')
+    parser.add_argument('--loops', type=int, help='How many times to loop (0-1=once, -1=indefinitely)', default=0)
+    parser.add_argument('--loop-sleep', type=int, help='How many seconds to sleep between loops', default=10)
+    args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+
+    if not os.path.exists(args.http_path):
+        logger.error("{} does not exist".format(args.http_path))
+        sys.exit(2)
+
+    if args.es_hosts:
+        es = Elasticsearch(hosts=args.es_hosts)
+        if not es.ping():
+            raise Exception(f'Elasticsearch at {args.es_hosts} is unavailable, quitting')
+        report_to_es = True
+        logger.info(f'{bcolors.WARNING}Elasticsearch at {args.es_hosts} configured{bcolors.ENDC}')
+
+    if os.path.isdir(args.http_path):
+        http_paths = [os.path.join(args.http_path, fname)
+                      for fname in os.listdir(args.http_path)]
+    else:
+        http_paths = [args.http_path]
+    http_paths = [path for path in http_paths if path.endswith('.http')]
+
+    if args.loops > 1:
+        for i in range(args.loops):
+            run()
+            logger.info(f'[{i+1}/{args.loops}] {bcolors.WARNING}Sleeping for {args.loop_sleep} seconds{bcolors.ENDC}')
+            sleep(args.loop_sleep)
+    elif args.loops == -1:
+        while True:
+            run()
+            logger.info(f'[\u221E] {bcolors.WARNING}Sleeping for {args.loop_sleep} seconds{bcolors.ENDC}')
+            sleep(args.loop_sleep)
+    else:
+        successes, failures = run()
+        if failures > 0:
+            sys.exit(1)
+        else:
+            sys.exit(0)

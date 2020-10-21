@@ -30,3 +30,8 @@ GET https://github.com/BigDataBoutique.json
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
     });
 %}
+
+###
+GET https://github.com/BigDataBoutique.json
+
+> scripts/my-script.js

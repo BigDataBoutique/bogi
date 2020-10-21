@@ -19,13 +19,15 @@ CompareJob = namedtuple('CompareJob', ['req', 'resp', 'request_id'])
 
 
 class HttpRunner:
+    response_handler_scripts = dict()
 
-    def __init__(self, _requests, ignore_headers, callback=None):
+    def __init__(self, _requests, ignore_headers, base_dir=None, callback=None):
         if callback is None:
             callback = CallbackBase()
         self._requests = _requests
         self._ignore_headers = ignore_headers
         self.callback = callback
+        self.base_dir = base_dir
 
     def run(self):
         resp_by_id = {}
@@ -55,7 +57,17 @@ class HttpRunner:
                                                             f' but got {resp.status_code}'))
                     break
 
-                if h.script:
+                # Supporting loading scripts from paths, e.g. `> scripts/my-my-script.js`
+                response_handler_script = None
+                if h.path:
+                    if h.path not in self.response_handler_scripts:
+                        with open(self.base_dir + '/' + h.path, 'r', encoding='utf-8') as file:
+                            self.response_handler_scripts[h.path] = file.read()
+                    response_handler_script = self.response_handler_scripts[h.path]
+                elif h.script:
+                    response_handler_script = h.script
+
+                if response_handler_script:
                     # Response handler script should be written in JavaScript ECMAScript 5.1 specification.
                     # See examples in
                     # https://www.jetbrains.com/help/webstorm/http-response-handling-examples.html#script-var-example
@@ -68,15 +80,11 @@ class HttpRunner:
                     )
 
                     try:
-                        context.execute(h.script)
+                        context.execute(response_handler_script)
                     except js2py.internals.simplex.JsException as e:
                         self.callback.failure(TestFailure(request=req,
                                                           response_time=response_time,
-                                                    error=str(e).replace('Error: your Python function failed!  ', '')))
-
-                if h.path:
-                    # TODO missing implementations
-                    pass
+                                                          error=str(e).replace('Error: your Python function failed!  ', '')))
 
             if req.tail.response_ref:
                 compare_jobs.append(CompareJob(req=req,

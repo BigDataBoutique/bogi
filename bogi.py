@@ -20,7 +20,7 @@ es = None
 report_to_es = False
 
 
-def run():
+def run(base_dir):
     es_actions = []
     success_count = 0
 
@@ -37,7 +37,8 @@ def run():
             logger.info(f'{bcolors.HEADER}Processing {fname}, {len(requests)} requests.{bcolors.ENDC}')
 
             try:
-                callback = HttpRunner(requests, callback=LoggerCallback(logger), ignore_headers=True).run()
+                callback = HttpRunner(requests, base_dir=base_dir,
+                                      callback=LoggerCallback(logger), ignore_headers=True).run()
                 if report_to_es:
                     index_name = 'bogi-reports-' + datetime.date.today().strftime('%Y.%m.%d')
                     es_actions.extend([{
@@ -117,22 +118,24 @@ if __name__ == '__main__':
     if os.path.isdir(args.http_path):
         http_paths = [os.path.join(args.http_path, fname)
                       for fname in os.listdir(args.http_path)]
+        base_dir = args.http_path
     else:
         http_paths = [args.http_path]
+        base_dir = os.path.dirname(args.http_path)
     http_paths = [path for path in http_paths if path.endswith('.http')]
 
     if args.loops > 1:
         for i in range(args.loops):
-            run()
+            run(base_dir)
             logger.info(f'[{i+1}/{args.loops}] {bcolors.WARNING}Sleeping for {args.loop_sleep} seconds{bcolors.ENDC}')
             sleep(args.loop_sleep)
     elif args.loops == -1:
         while True:
-            run()
+            run(base_dir)
             logger.info(f'[\u221E] {bcolors.WARNING}Sleeping for {args.loop_sleep} seconds{bcolors.ENDC}')
             sleep(args.loop_sleep)
     else:
-        successes, failures = run()
+        successes, failures = run(base_dir)
         if failures > 0:
             sys.exit(1)
         else:

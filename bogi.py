@@ -37,8 +37,10 @@ def run(base_dir):
             logger.info(f'{bcolors.HEADER}Processing {fname}, {len(requests)} requests.{bcolors.ENDC}')
 
             try:
-                callback = HttpRunner(requests, base_dir=base_dir,
-                                      callback=LoggerCallback(logger), ignore_headers=True).run()
+                with HttpRunner(requests, base_dir=base_dir, callback=LoggerCallback(logger),
+                                ignore_headers=True) as hr:
+                    callback = hr.run()
+
                 if report_to_es:
                     index_name = 'bogi-reports-' + datetime.date.today().strftime('%Y.%m.%d')
                     es_actions.extend([{

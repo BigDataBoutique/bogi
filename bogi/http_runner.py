@@ -28,6 +28,13 @@ class HttpRunner:
         self._ignore_headers = ignore_headers
         self.callback = callback
         self.base_dir = base_dir
+        self.session = requests.Session()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.session.close()
 
     def run(self):
         resp_by_id = {}
@@ -41,8 +48,8 @@ class HttpRunner:
                 latency = resp.elapsed.total_seconds() * 100
             except RequestException as e:
                 self.callback.failure(TestFailure(request=req,
-                                            response_time=-1,
-                                            error=f'Error issuing the request, root cause: {str(e)}'))
+                                                  response_time=-1,
+                                                  error=f'Error issuing the request, root cause: {str(e)}'))
                 continue
 
             if req.id:
@@ -121,8 +128,18 @@ class HttpRunner:
         if '@no-redirect' in req.options:
             allow_redirects = False
 
-        start = time.time()
-        resp = requests.request(req.method, req.target, headers=headers, data=data, allow_redirects=allow_redirects)
+        no_cookie_jar = False
+        if '@no-cookie-jar' in req.options:
+            no_cookie_jar = True
+
+        if no_cookie_jar:
+            start = time.time()
+            resp = requests.request(req.method, req.target, headers=headers, data=data,
+                                    allow_redirects=allow_redirects)
+        else:
+            start = time.time()
+            resp = self.session.request(req.method, req.target, headers=headers, data=data,
+                                        allow_redirects=allow_redirects)
         return resp, (time.time() - start) * 100
 
     def _diff_responses(self, resp1, resp2):
@@ -162,3 +179,4 @@ class HttpRunner:
 
     def _headers_to_list(self, headers):
         return [key + ': ' + val + '\n' for key, val in headers.items()]
+
